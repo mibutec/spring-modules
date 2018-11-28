@@ -23,10 +23,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
 
-import com.werum.example.course.controller.CourseControllerComponent;
+import com.werum.example.course.controller.CourseControllerModule;
 import com.werum.example.course.dao.Course;
 import com.werum.example.course.dao.CourseRepository;
-import com.werum.example.student.controller.StudentControllerComponent;
+import com.werum.example.student.controller.StudentControllerModule;
 
 /**
  *
@@ -35,7 +35,7 @@ import com.werum.example.student.controller.StudentControllerComponent;
  *
  */
 @SpringBootApplication
-@Import({StudentControllerComponent.class, CourseControllerComponent.class})
+@Import({StudentControllerModule.class, CourseControllerModule.class})
 public class StudentApplication {
 
     @Autowired

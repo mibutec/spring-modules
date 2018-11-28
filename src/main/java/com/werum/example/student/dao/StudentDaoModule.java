@@ -19,17 +19,17 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-import com.werum.example.course.dao.CourseDaoComponent;
+import com.werum.example.course.dao.CourseDaoModule;
 import com.werum.springmodules.definition.ModuleDefinition;
 import com.werum.springmodules.definition.ModuleConfiguration;
 
 /**
  * Component definition for dao layer of student domain
  */
-public class StudentDaoComponent extends ModuleDefinition {
+public class StudentDaoModule extends ModuleDefinition {
 
-    public StudentDaoComponent() {
-        super(StudentDaoComponentConfiguration.class, CourseDaoComponent.class);
+    public StudentDaoModule() {
+        super(StudentDaoComponentConfiguration.class, CourseDaoModule.class);
     }
 
     @ModuleConfiguration

@@ -18,14 +18,14 @@ package com.werum.example.tests.mockconfigurations;
 import org.springframework.context.annotation.Bean;
 
 import com.werum.example.student.service.StudentService;
-import com.werum.example.student.service.StudentServiceComponent;
+import com.werum.example.student.service.StudentServiceModule;
 import com.werum.springmodules.definition.ReplacesConfigurationClass;
 import com.werum.springmodules.testsupport.MockitoFactoryBean;
 
 /**
- * Mock component configuration for {@link StudentServiceComponent}
+ * Mock component configuration for {@link StudentServiceModule}
  */
-@ReplacesConfigurationClass(StudentServiceComponent.class)
+@ReplacesConfigurationClass(StudentServiceModule.class)
 public class StudentServiceMockConfiguration {
     @Bean
     public MockitoFactoryBean<StudentService> studentService() {

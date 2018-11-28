@@ -15,11 +15,14 @@
  */
 package com.werum.example.tests;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.Arrays;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,66 +34,61 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.annotation.DirtiesContext.ClassMode;
-import org.springframework.test.annotation.DirtiesContext.MethodMode;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.werum.example.course.controller.CourseController;
 import com.werum.example.course.dao.Course;
+import com.werum.example.course.dao.CourseRepository;
 import com.werum.example.course.service.CourseServiceLogger;
-import com.werum.example.student.controller.StudentControllerComponent;
+import com.werum.example.student.controller.StudentControllerModule;
 import com.werum.example.student.dao.Student;
 import com.werum.example.student.dao.StudentRepository;
-import com.werum.example.tests.mockconfigurations.CourseServiceMockConfiguration;
+import com.werum.example.student.service.StudentService;
+import com.werum.example.tests.mockconfigurations.StudentServiceMockConfiguration;
 import com.werum.springmodules.definition.DependencyResolverStrategy.AlternativeComponentConfigurations;
 import com.werum.springmodules.testsupport.ModuleTest;
 
 /**
- * Testcase testing all layers of student domain isolated from other domains via MockMvc
+ * Testcase testing the controller layer of student domain isolated without any other components via MockMvc
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @ModuleTest
-@Import(StudentControllerComponent.class)
-@AlternativeComponentConfigurations(CourseServiceMockConfiguration.class)
-@EnableAutoConfiguration // TODO: how to start MockMvc without Jpa?
-@Rollback // TODO: why doesn't this work?
-@DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD, methodMode = MethodMode.AFTER_METHOD)
+@Import(StudentControllerModule.class)
+@AlternativeComponentConfigurations(StudentServiceMockConfiguration.class)
+@EnableAutoConfiguration // how to start MockMvc without Jpa?
 @AutoConfigureMockMvc
-public class StudentEndToEndComponentTest {
+public class StudentControllerModuleTest {
     @Autowired
     private ApplicationContext context;
     @Autowired
-    private StudentRepository studentRepository;
+    private StudentService studentServiceMock;
     @Autowired
     private MockMvc mockMvc;
 
     @BeforeEach
     public void setup() {
-        studentRepository.save(new Student("1", "Michael", new Course("TestCourse", 2.0f)));
+        when(studentServiceMock.getAll())
+                .thenReturn(Arrays.asList(new Student("1", "Michael", new Course("Example Course", 2.0f))));
     }
 
     @Test
     public void shouldListStudents() throws Exception {
         mockMvc.perform(get("/student/list")).andExpect(status().isOk())
-                .andExpect(content().json("[{'name': 'Michael', course: {name: 'TestCourse'}}]"));
+                .andExpect(content().json("[{'name': 'Michael', course: {name: 'Example Course'}}]"));
     }
 
     @Test
     public void shouldCreateStudent() throws Exception {
         mockMvc.perform(get("/student/create?name=Michael&actualNc=1.0&course=TestCourse")).andExpect(status().isOk());
-
-        Student student = studentRepository.findAll().iterator().next();
-        assertEquals(student.getMatrikelNo(), "1");
-        assertEquals(student.getName(), "Michael");
-        assertEquals(student.getCourse().getName(), "TestCourse");
+        verify(studentServiceMock).createStudent("Michael", 1.0f, "TestCourse");
     }
 
     @Test
     public void shouldLoadOnlyRelevantPartsIntoApplicationContext() {
         assertBeanDoesNotExist(context, CourseController.class);
         assertBeanDoesNotExist(context, CourseServiceLogger.class);
+        assertBeanDoesNotExist(context, StudentRepository.class);
+        assertBeanDoesNotExist(context, CourseRepository.class);
     }
 
     public static void assertBeanDoesNotExist(ApplicationContext context, Class<?> beanClass) {

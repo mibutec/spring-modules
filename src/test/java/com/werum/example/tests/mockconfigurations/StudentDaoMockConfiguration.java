@@ -19,14 +19,14 @@ import static org.mockito.Mockito.mock;
 
 import org.springframework.context.annotation.Bean;
 
-import com.werum.example.student.dao.StudentDaoComponent;
+import com.werum.example.student.dao.StudentDaoModule;
 import com.werum.example.student.dao.StudentRepository;
 import com.werum.springmodules.definition.ReplacesConfigurationClass;
 
 /**
- * Mock component configuration for {@link StudentDaoComponent}
+ * Mock component configuration for {@link StudentDaoModule}
  */
-@ReplacesConfigurationClass(StudentDaoComponent.class)
+@ReplacesConfigurationClass(StudentDaoModule.class)
 public class StudentDaoMockConfiguration {
     @Bean
     public StudentRepository studentRepository() {

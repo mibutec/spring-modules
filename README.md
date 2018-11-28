@@ -8,37 +8,37 @@ A module is divided into two parts
 
 Since the focus of spring-modules is testing, the granularity of one module should be "something that can be meaningful tested as a unit". Thinking of one module as one layer of a domain might be a helpful start.
 
-One simple Component might look something like this:
+One simple Module might look something like this:
 
-    public class StudentDaoComponent extends ModuleDefinition {
-        public StudentDaoComponent() {
-            super(StudentDaoComponentConfiguration.class);
+    public class StudentDaoModule extends ModuleDefinition {
+        public StudentDaoModule() {
+            super(StudentDaoModuleConfiguration.class);
         }
     
         @ModuleConfiguration
         @ComponentScan
         @EnableJpaRepositories
         @EntityScan
-        static class StudentDaoComponentConfiguration {
+        static class StudentDaoModuleConfiguration {
     
         }
     }
 
-`StudentDaoComponentConfiguration` contains all the code to get the dao layer working. In this simple case `StudentDaoComponent` is just a wrapper for the Configuration.
+`StudentDaoModuleConfiguration` contains all the code to get the dao layer working. In this simple case `StudentDaoModule` is just a wrapper for the Configuration.
 
-    public class StudentServiceComponent extends ModuleDefinition {
-        public StudentServiceComponent() {
-            super(StudentServiceComponentConfiguration.class, StudentDaoComponent.class, CourseServiceComponent.class);
+    public class StudentServiceModule extends ModuleDefinition {
+        public StudentServiceModule() {
+            super(StudentServiceModuleConfiguration.class, StudentDaoModule.class, CourseServiceModule.class);
         }
     
         @ModuleConfiguration
         @ComponentScan
-        static class StudentServiceComponentConfiguration {
+        static class StudentServiceModuleConfiguration {
     
         }
     }
 
-In that example `StudentServiceComponent` has a dependency to `StudentDaoComponent` and `CourseServiceComponent`. Those are defined in the constructor of the Module Definition.
+In that example `StudentServiceModule` has a dependency to `StudentDaoModule` and `CourseServiceModule`. Those are defined in the constructor of the Module Definition.
 
 # Testing
 Writing a ModuleTest allows you to decide on module-level which modules are inside the scope of your test and which modules are outside (so should be mocked).
@@ -46,7 +46,7 @@ Writing a ModuleTest allows you to decide on module-level which modules are insi
 ## MockConfigurations
 Inside your testcode you may define a substitute Configuration for your ModuleConfiguration consisting of other bean definition, like mocks, stubs or dummy implementations
 
-    @ReplacesConfigurationClass(StudenDaoComponent.class)
+    @ReplacesConfigurationClass(StudenDaoModule.class)
     public class StudentDaoMockConfiguration {
         @Bean
         public StudentRepository studentRepository() {
@@ -54,14 +54,14 @@ Inside your testcode you may define a substitute Configuration for your ModuleCo
         }
     }
 
-That configuration may be used in your tests as a substitute for the real `StudentServiceComponent`, so your test may use the `Repository` mock instead of starting the whole persistence framework.
+That configuration may be used in your tests as a substitute for the real `StudentServiceModule`, so your test may use the `Repository` mock instead of starting the whole persistence framework.
 
 ## ModuleTest
  
     @ModuleTest
-    @Import(StudentServiceComponent.class)
-    @AlternativeComponentConfigurations({CourseServiceMockConfiguration.class, StudentDaoMockConfiguration.class})
-    public class StudentServiceComponentTest {
+    @Import(StudentServiceModule.class)
+    @AlternativeModuleConfigurations({CourseServiceMockConfiguration.class, StudentDaoMockConfiguration.class})
+    public class StudentServiceModuleTest {
         @Autowired
         private StudentService testee;
         @Autowired
@@ -81,15 +81,15 @@ That configuration may be used in your tests as a substitute for the real `Stude
         }
     }
 
-This test says it will test the `StudentServiceComponent`, but use `CourseServiceMockConfiguration` and `StudentDaoMockConfiguration` as substitutes for the real dependencies.
+This test says it will test the `StudentServiceModule`, but use `CourseServiceMockConfiguration` and `StudentDaoMockConfiguration` as substitutes for the real dependencies.
 
 In other cases you might want to test the iteraction of serivce layer and dao layer. This might be done in a test like this
 
     @ModuleTest
     @DataJpaTest
-    @Import(StudentServiceComponent.class)
-    @AlternativeComponentConfigurations(CourseServiceMockConfiguration.class)
-    public class StudentServiceAndDaoComponentTest {
+    @Import(StudentServiceModule.class)
+    @AlternativeModuleConfigurations(CourseServiceMockConfiguration.class)
+    public class StudentServiceAndDaoModuleTest {
     // ...
  
 In the test above test the students service- and dao layer are tested together, but the dependencies to the course domain are still mocked.
@@ -97,12 +97,12 @@ In the test above test the students service- and dao layer are tested together, 
 ## Experimental (even more than the other stuff)
 The concept of *MockConfiguration*s forces you write replacements for your existing configuration classes. This might get a cumbersome and type-intensive task. spring-modules comes with support to create MockConfiguration out of your ModuleConfigurations.
 
-`StudentServiceComponentTest` from above could also be written like this
+`StudentServiceModuleTest` from above could also be written like this
 
     @ModuleTest
-    @Import(StudentServiceComponent.class)
+    @Import(StudentServiceModule.class)
     @MockTheseModules({CourseServiceModule.class, StudentDaoModule.class})
-    public class StudentServiceComponentTest {
+    public class StudentServiceModuleTest {
     // ...
 
 This takes the burden from you to write a MockConfiguration for each Module you want to mock

@@ -15,10 +15,9 @@
  */
 package com.werum.example.tests;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -26,54 +25,64 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
 
 import com.werum.example.course.controller.CourseController;
 import com.werum.example.course.dao.Course;
+import com.werum.example.course.dao.CourseRepository;
 import com.werum.example.course.service.CourseService;
 import com.werum.example.course.service.CourseServiceLogger;
 import com.werum.example.student.controller.StudentController;
 import com.werum.example.student.dao.Student;
 import com.werum.example.student.dao.StudentRepository;
 import com.werum.example.student.service.StudentService;
-import com.werum.example.student.service.StudentServiceComponent;
+import com.werum.example.student.service.StudentServiceModule;
 import com.werum.example.tests.mockconfigurations.CourseServiceMockConfiguration;
-import com.werum.example.tests.mockconfigurations.StudentDaoMockConfiguration;
 import com.werum.springmodules.definition.DependencyResolverStrategy.AlternativeComponentConfigurations;
 import com.werum.springmodules.testsupport.ModuleTest;
 
 /**
- * Testcase testing the service layer of student domain isolated from all other components
+ * Testcase testing the service layer of student domain combined with dao layer, but mocking other domains
  */
 @ModuleTest
-@Import(StudentServiceComponent.class)
-@AlternativeComponentConfigurations({CourseServiceMockConfiguration.class, StudentDaoMockConfiguration.class})
-public class StudentServiceComponentTest {
+@DataJpaTest
+@Import(StudentServiceModule.class)
+@AlternativeComponentConfigurations(CourseServiceMockConfiguration.class)
+public class StudentServiceAndDaoModuleTest {
     @Autowired
     private StudentService testee;
     @Autowired
+    private CourseRepository courseRepository;
+    @Autowired
     private ApplicationContext context;
     @Autowired
-    private StudentRepository studentRepositoryMock;
+    private StudentRepository studenRepository;
     @Autowired
     private CourseService courseServiceMock;
 
+    private Course exampleCourse;
+
     @BeforeEach
     public void setup() {
-        when(courseServiceMock.getCourse(Mockito.any())).thenReturn(new Course("TestCourse", 2.0f));
+        exampleCourse = courseRepository.save(new Course("TestCourse", 2.0f));
+        when(courseServiceMock.getCourse(Mockito.any())).thenReturn(exampleCourse);
     }
 
     @Test
     public void shouldCreateStudents() {
         testee.createStudent("Michael", 1.0f, "TestCourse");
-        verify(studentRepositoryMock).save(Mockito.any(Student.class));
+
+        Student loaded = studenRepository.findAll().iterator().next();
+        assertEquals(loaded.getName(), "Michael");
+        assertEquals(loaded.getCourse().getName(), "TestCourse");
     }
 
     @Test
     public void shouldPreventCreatingStudentWithBadNc() {
         assertThrows(RuntimeException.class, () -> testee.createStudent("Michael", 2.5f, "TestCourse"));
-        verifyNoMoreInteractions(studentRepositoryMock);
+        assertEquals(0, studenRepository.count());
     }
 
     @Test

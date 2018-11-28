@@ -13,29 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.werum.example.course.dao;
+package com.werum.example.course.service;
 
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+import com.werum.example.course.dao.CourseDaoModule;
 import com.werum.springmodules.definition.ModuleDefinition;
 import com.werum.springmodules.definition.ModuleConfiguration;
 
 /**
- * Component definition for dao layer of course domain
+ * Component definition for service layer of course domain
  */
-public class CourseDaoComponent extends ModuleDefinition {
+public class CourseServiceModule extends ModuleDefinition {
 
-    public CourseDaoComponent() {
-        super(CourseDaoComponentConfiguration.class);
+    public CourseServiceModule() {
+        super(CourseServiceComponentConfiguration.class, CourseDaoModule.class);
     }
 
     @ModuleConfiguration
     @ComponentScan
-    @EnableJpaRepositories
-    @EntityScan
-    static class CourseDaoComponentConfiguration {
+    static class CourseServiceComponentConfiguration {
 
     }
 

@@ -16,80 +16,63 @@
 package com.werum.example.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
 
-import com.werum.example.course.controller.CourseController;
 import com.werum.example.course.dao.Course;
 import com.werum.example.course.dao.CourseRepository;
 import com.werum.example.course.service.CourseService;
-import com.werum.example.course.service.CourseServiceLogger;
 import com.werum.example.student.controller.StudentController;
 import com.werum.example.student.dao.Student;
+import com.werum.example.student.dao.StudentDaoModule;
 import com.werum.example.student.dao.StudentRepository;
 import com.werum.example.student.service.StudentService;
-import com.werum.example.student.service.StudentServiceComponent;
-import com.werum.example.tests.mockconfigurations.CourseServiceMockConfiguration;
-import com.werum.springmodules.definition.DependencyResolverStrategy.AlternativeComponentConfigurations;
 import com.werum.springmodules.testsupport.ModuleTest;
 
 /**
- * Testcase testing the service layer of student domain combined with dao layer, but mocking other domains
+ * Testcase testing the dao layer of student domain isolated without any other components
+ *
  */
 @ModuleTest
 @DataJpaTest
-@Import(StudentServiceComponent.class)
-@AlternativeComponentConfigurations(CourseServiceMockConfiguration.class)
-public class StudentServiceAndDaoComponentTest {
+@Import(StudentDaoModule.class)
+public class StudentDaoModuleTest {
     @Autowired
-    private StudentService testee;
+    private StudentRepository testee;
     @Autowired
     private CourseRepository courseRepository;
     @Autowired
     private ApplicationContext context;
-    @Autowired
-    private StudentRepository studenRepository;
-    @Autowired
-    private CourseService courseServiceMock;
 
     private Course exampleCourse;
 
     @BeforeEach
     public void setup() {
         exampleCourse = courseRepository.save(new Course("TestCourse", 2.0f));
-        when(courseServiceMock.getCourse(Mockito.any())).thenReturn(exampleCourse);
     }
 
     @Test
-    public void shouldCreateStudents() {
-        testee.createStudent("Michael", 1.0f, "TestCourse");
+    public void shouldCreateAndLoadStudents() {
+        testee.save(new Student("1", "Michael", exampleCourse));
 
-        Student loaded = studenRepository.findAll().iterator().next();
+        Student loaded = testee.findByMatrikelNo("1");
+        assertEquals(loaded.getMatrikelNo(), "1");
         assertEquals(loaded.getName(), "Michael");
         assertEquals(loaded.getCourse().getName(), "TestCourse");
     }
 
     @Test
-    public void shouldPreventCreatingStudentWithBadNc() {
-        assertThrows(RuntimeException.class, () -> testee.createStudent("Michael", 2.5f, "TestCourse"));
-        assertEquals(0, studenRepository.count());
-    }
-
-    @Test
     public void shouldLoadOnlyRelevantPartsIntoApplicationContext() {
         assertBeanDoesNotExist(context, StudentController.class);
-        assertBeanDoesNotExist(context, CourseController.class);
-        assertBeanDoesNotExist(context, CourseServiceLogger.class);
+        assertBeanDoesNotExist(context, StudentService.class);
+        assertBeanDoesNotExist(context, CourseService.class);
     }
 
     public static void assertBeanDoesNotExist(ApplicationContext context, Class<?> beanClass) {

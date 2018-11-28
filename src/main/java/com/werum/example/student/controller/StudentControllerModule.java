@@ -13,26 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.werum.example.course.service;
+package com.werum.example.student.controller;
 
 import org.springframework.context.annotation.ComponentScan;
 
-import com.werum.example.course.dao.CourseDaoComponent;
+import com.werum.example.student.service.StudentServiceModule;
 import com.werum.springmodules.definition.ModuleDefinition;
 import com.werum.springmodules.definition.ModuleConfiguration;
 
 /**
- * Component definition for service layer of course domain
+ * Component definition for controller layer of student domain
  */
-public class CourseServiceComponent extends ModuleDefinition {
+public class StudentControllerModule extends ModuleDefinition {
 
-    public CourseServiceComponent() {
-        super(CourseServiceComponentConfiguration.class, CourseDaoComponent.class);
+    public StudentControllerModule() {
+        super(StudentControllerComponentConfiguration.class, StudentServiceModule.class);
     }
 
     @ModuleConfiguration
     @ComponentScan
-    static class CourseServiceComponentConfiguration {
+    static class StudentControllerComponentConfiguration {
 
     }
 
